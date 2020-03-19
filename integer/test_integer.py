@@ -37,7 +37,7 @@ def test_integer_plus4():
 
 def test_integer_complement1():
     integer = Integer(-3)
-    bit_list = [Bit(True) for i in range(Integer.field_len)]
+    bit_list = [Bit(True) for _ in range(Integer.field_len)]
     bit_list[-2] = Bit(False)
 
     for i, bit in enumerate(bit_list):
