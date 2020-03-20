@@ -1,6 +1,6 @@
 from bit.bit import Bit
 from unsigned_integer.unsigned_integer import UnsignedInteger
-
+import pytest
 
 def test_unsigned_integer_init1():
     unsigned_integer = UnsignedInteger(3)
@@ -56,10 +56,36 @@ def test_unsigned_integer_multiplication():
     assert unsigned_integer1 * unsigned_integer2 == UnsignedInteger(10379)
 
 
-def test_unsigned_integer_division():
+def test_unsigned_integer_division1():
     unsigned_integer1 = UnsignedInteger(20)
     unsigned_integer2 = UnsignedInteger(4)
     assert unsigned_integer1 / unsigned_integer2 == UnsignedInteger(5)
+
+
+def test_unsigned_integer_division2():
+    integer1 = UnsignedInteger.max_value()
+    integer2 = UnsignedInteger(5)
+    assert integer1 / integer2 == UnsignedInteger(858993459)
+
+
+def test_unsigned_integer_division3():
+    integer1 = UnsignedInteger.max_value()
+    integer2 = UnsignedInteger(5)
+    assert integer2 / integer1 == UnsignedInteger(0)
+
+
+def test_unsigned_integer_division4():
+    integer1 = UnsignedInteger(6)
+    integer2 = UnsignedInteger(0)
+    with pytest.raises(ZeroDivisionError):
+        integer1 / integer2
+
+
+def test_unsigned_integer_division5():
+    integer1 = UnsignedInteger(0)
+    integer2 = UnsignedInteger(0)
+    with pytest.raises(ZeroDivisionError):
+        integer1 / integer2
 
 
 def test_unsigned_integer_max_value1():

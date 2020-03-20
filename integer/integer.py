@@ -151,6 +151,16 @@ class Integer:
             remain.sign = remain.sign ^ carry.bits[0]
         return remain._add(carry << 1)
 
+    def _add_check_overflow(self, other: "Integer"):
+        if other.is_zero():
+            return self, True
+
+        carry = self & other
+        remain = self ^ other
+        if carry.bits[0]:
+            return self, False
+        return remain._add_check_overflow(carry << 1)
+
     def __sub__(self, other: "Integer"):
         """
         Binary Sub 연산 ( - )을 위한 operator overloading
@@ -182,16 +192,20 @@ class Integer:
         :param other: Integer 타입 가정
         :return: 새로운 Integer 객체로 return
         """
+        if other.is_zero():
+            raise ZeroDivisionError()
 
         sign = self.sign ^ other.sign
         remain = Integer()
         res = Integer()
         for i in range(self.field_len-1, -1, -1):
-            div = other << i
-
-            if div.is_zero():
+            div, suc = other._lshift_check_overflow(i)
+            if not suc:
                 continue
-            if remain._add(div)._le(self):
+            sum_val, suc = remain._add_check_overflow(div)
+            if not suc:
+                continue
+            if sum_val._le(self):
                 remain += div
                 res |= Integer(1) << i
 
@@ -217,7 +231,7 @@ class Integer:
         :param other: Integer 타입 가정
         :return: 새로운 Integer 객체로 return
         """
-        for i in range(self.field_len-1, -1, -1):
+        for i in range(self.field_len):
             if self.bits[i] > other.bits[i]:
                 return False
         return True
@@ -259,3 +273,15 @@ class Integer:
         for _ in range(num):
             bits.append(Bit())
         return Integer(bits)
+
+    def _lshift_check_overflow(self, num: int):
+        """
+        Overflow를 확인하여 overflow되는 값이 있을 경우 shift 하지 않음
+        :param num: shift 하는 크기
+        :return: 새로운 Integer 객체로 return
+        """
+        for bit in self.bits[:num]:
+            if bit:
+                return self, False
+
+        return self << num, True

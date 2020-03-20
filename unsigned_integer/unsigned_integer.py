@@ -102,6 +102,16 @@ class UnsignedInteger:
         remain = self ^ other
         return remain + (carry << 1)
 
+    def _add_check_overflow(self, other: "UnsignedInteger"):
+        if other.is_zero():
+            return self, True
+
+        carry = self & other
+        remain = self ^ other
+        if carry.bits[0]:
+            return self, False
+        return remain._add_check_overflow(carry << 1)
+
     def __sub__(self, other: "UnsignedInteger"):
         """
         Binary Sub 연산 ( - )을 위한 operator overloading
@@ -132,15 +142,22 @@ class UnsignedInteger:
         :param other: UnsignedInteger 타입 가정
         :return: 새로운 UnsignedInteger 객체로 return
         """
+        if other.is_zero():
+            raise ZeroDivisionError()
 
         remain = UnsignedInteger()
         res = UnsignedInteger()
         for i in range(self.field_len-1, -1, -1):
-            div = other << i
-
+            div, suc = other._lshift_check_overflow(i)
+            if not suc:
+                continue
             if div.is_zero():
                 continue
-            if remain + div <= self:
+
+            sum_val, suc = remain._add_check_overflow(div)
+            if not suc:
+                continue
+            if sum_val <= self:
                 remain += div
                 res |= UnsignedInteger(1) << i
 
@@ -194,3 +211,15 @@ class UnsignedInteger:
         for _ in range(num):
             bits.append(Bit())
         return UnsignedInteger(bits)
+
+    def _lshift_check_overflow(self, num: int):
+        """
+        Overflow를 확인하여 overflow되는 값이 있을 경우 shift 하지 않음
+        :param num: shift 하는 크기
+        :return: 새로운 Integer 객체로 return
+        """
+        for bit in self.bits[:num]:
+            if bit:
+                return self, False
+
+        return self << num, True

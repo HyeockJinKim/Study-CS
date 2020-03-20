@@ -14,8 +14,10 @@ Singed integer의 비트 단위의 값 처리를 확인
 ### [2. Unsigned Integer][unsigned_integer]
 > Bit 단위의 Unsigned Integer 구현
 
-Unsinged integer의 비트 단위의 값 처리를 확인
+Unsigned integer의 비트 단위의 값 처리를 확인
+
 
 [bit]: ./bit/README.md
 [integer]: ./integer/README.md
 [unsigned_integer]: ./unsigned_integer/README.md
+
