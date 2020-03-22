@@ -4,7 +4,15 @@ from bit.bit import Bit
 
 class UnsignedInteger:
     """
-    32 bit로 이루어진 UnsignedInteger 값
+    Integer의 메모리 구조
+    +-------------------------------------------------------------------------------------+
+    |                                    field (32 bit)                                   |
+    +-------------------------------------------------------------------------------------+
+
+    32 bit로 이루어진 unsigned integer 값
+
+    음수를 표현할 수 없음
+    field 값을 통해 0부터 2**31-1까지의 값을 표현함
     """
     bit_len = 32
     field_len = bit_len
@@ -44,7 +52,6 @@ class UnsignedInteger:
     def set(self, _int: int):
         """
         int 값을 통해 unsigned integer 를 받기 위한 함수
-        double 등의 다른 정수 값을 int 타입으로 받는 것처럼 취급
         """
         _int = _int % self.limit
         for i, x in enumerate(self.frame):

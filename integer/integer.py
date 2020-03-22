@@ -4,7 +4,15 @@ from bit.bit import Bit
 
 class Integer:
     """
+    Integer의 메모리 구조
+    +--------------+----------------------------------------------------------------------+
+    | sign (1 bit) |                            field (31 bit)                            |
+    +--------------+----------------------------------------------------------------------+
+
     32 bit로 이루어진 integer 값
+
+    양수 음수를 Sign bit를 통해 구분
+    field 값을 통해 -(2**30-1)부터 2**30-1까지의 값을 표현함
     """
     bit_len = 32
     field_len = bit_len - 1
@@ -49,7 +57,6 @@ class Integer:
     def set(self, _int: int):
         """
         int 값을 통해 integer 를 받기 위한 함수
-        double 등의 다른 정수 값을 int 타입으로 받는 것처럼 취급
         """
         if _int < 0:
             self.sign = Bit(True)
