@@ -18,9 +18,52 @@ class Integer:
     field_len = bit_len - 1
     limit = 2**bit_len
     frame = [2**i for i in range(bit_len-2, -1, -1)]
+    char_map = {
+        '0': None,
+        '1': [Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(),
+              Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(),
+              Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(),
+              Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(True)],
+        '2': [Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(),
+              Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(),
+              Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(),
+              Bit(), Bit(), Bit(), Bit(), Bit(), Bit(True), Bit()],
+        '3': [Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(),
+              Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(),
+              Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(),
+              Bit(), Bit(), Bit(), Bit(), Bit(), Bit(True), Bit(True)],
+        '4': [Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(),
+              Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(),
+              Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(),
+              Bit(), Bit(), Bit(), Bit(), Bit(True), Bit(), Bit()],
+        '5': [Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(),
+              Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(),
+              Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(),
+              Bit(), Bit(), Bit(), Bit(), Bit(True), Bit(), Bit(True)],
+        '6': [Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(),
+              Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(),
+              Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(),
+              Bit(), Bit(), Bit(), Bit(), Bit(True), Bit(True), Bit()],
+        '7': [Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(),
+              Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(),
+              Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(),
+              Bit(), Bit(), Bit(), Bit(), Bit(True), Bit(True), Bit(True)],
+        '8': [Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(),
+              Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(),
+              Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(),
+              Bit(), Bit(), Bit(), Bit(True), Bit(), Bit(), Bit()],
+        '9': [Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(),
+              Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(),
+              Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(),
+              Bit(), Bit(), Bit(), Bit(True), Bit(), Bit(), Bit(True)],
+    }
 
-    def __init__(self, bits: list or int = None, sign: Bit = Bit()):
-        if type(bits) == int:
+    def __init__(self, bits: list or str or int = None, sign: Bit = Bit()):
+        if type(bits) == str:
+            res = self.str_to_int(bits)
+            self.sign = res.sign
+            self.bits = res.bits
+        elif type(bits) == int:
             self.sign = sign
             self.bits = [Bit() for _ in range(self.field_len)]
             self.set(bits)
@@ -31,11 +74,11 @@ class Integer:
             self.sign = sign
             self.bits = [Bit() for _ in range(self.field_len)]
 
-    def is_zero(self):
+    def is_zero(self) -> bool:
         return not reduce(lambda x, y: x | y, self.bits)
 
     @classmethod
-    def max_value(cls):
+    def max_value(cls) -> "Integer":
         """
         Integer 의 최대값
         :return: Integer의 최대값 (2**32 - 1)
@@ -45,7 +88,7 @@ class Integer:
         return Integer(max_list, sign)
 
     @classmethod
-    def min_value(cls):
+    def min_value(cls) -> "Integer":
         """
         Integer 의 최소값
         :return: Integer의 최소값 (-(2**32 - 1))
@@ -57,6 +100,8 @@ class Integer:
     def set(self, _int: int):
         """
         int 값을 통해 integer 를 받기 위한 함수
+
+        deprecated
         """
         if _int < 0:
             self.sign = Bit(True)
@@ -67,11 +112,48 @@ class Integer:
         for i, x in enumerate(self.frame):
             self.bits[i].set(bool(_int & x))
 
-    def val(self):
+    @classmethod
+    def str_to_int(cls, val: str) -> "Integer":
+        """
+        String 값을 통해 integer 값 read
+        :param val: String 으로 표현된 정수 값 (공백이 없다는 가정)
+        :return: Integer 의 값
+        """
+        if val[0] == '-':
+            sign = Bit(True)
+            val = val[1:]
+        else:
+            sign = Bit()
+        res = Integer()
+        for c in val:
+            res = res * cls.ten() + Integer(cls.char_to_dec(c))
+
+        res.sign = sign
+        return res
+
+    @classmethod
+    def char_to_dec(cls, val: str) -> list:
+        """
+        character 1 개를 0-9의 값으로 읽음
+        :param val: 0-9의 문자열
+        :return: Integer 객체
+        """
+        return cls.char_map[val]
+
+    @classmethod
+    def ten(cls) -> "Integer":
+        return Integer([Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(),
+                        Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(),
+                        Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(),
+                        Bit(), Bit(), Bit(), Bit(True), Bit(), Bit(True), Bit()])
+
+    def val(self) -> int:
         """
         bit 들로 이루어진 값을 int 값으로 읽을 수 있도록 만드는 함수
         음수 확인은 signed bit를 통해 확인
-        :return:
+
+        테스트 및 출력을 위해 사용하는 함수
+        :return: int 값으로 리턴
         """
         res = 0
         for i, bit in enumerate(self.bits):
@@ -81,22 +163,25 @@ class Integer:
             return -res
         return res
 
-    def is_negative(self):
+    def __str__(self) -> str:
+        return str(self.val())
+
+    def is_negative(self) -> Bit:
         """
         Sign 비트를 통해 음수 확인
         :return: 음수인지 여부
         """
         return self.sign
 
-    def complement(self):
+    def complement(self) -> "Integer":
         """
         뺄셈을 위한 2의 보수 계산
         :return: 2의 보수 값
         """
         res = ~self
-        return res._add(Integer(1))
+        return res._add(Integer('1'))
 
-    def decomplement(self):
+    def decomplement(self) -> "Integer":
         """
         음수 값은 2의 보수를 취한 값을 되돌림
         :return: sign 비트로 표현된 정수 값
@@ -104,10 +189,7 @@ class Integer:
         res = self._add(self.min_value())
         return ~res
 
-    def __str__(self):
-        return str(self.val())
-
-    def __invert__(self):
+    def __invert__(self) -> "Integer":
         """
         Bit invert 연산( ~ )을 위한 operator overloading
         :return: 새로운 Integer 객체로 return
@@ -115,14 +197,14 @@ class Integer:
         bits = [~bit for bit in self.bits]
         return Integer(bits, self.sign)
 
-    def __neg__(self):
+    def __neg__(self) -> "Integer":
         """
         sign minus 연산( - )을 위한 operator overloading
         :return: 새로운 Integer 객체로 return
         """
         return Integer(self.bits[::], ~self.sign)
 
-    def __add__(self, other: "Integer"):
+    def __add__(self, other: "Integer") -> "Integer":
         """
         Binary Add 연산 ( + )을 위한 operator overloading
         음수는 2의 보수로 변환하여 계산
@@ -143,7 +225,7 @@ class Integer:
             return res.decomplement()
         return res
 
-    def _add(self, other: "Integer"):
+    def _add(self, other: "Integer") -> "Integer":
         """
         음수일 경우 2의 보수가 취해진 후의 더하기 연산
         :param other: Integer 타입 가정
@@ -158,7 +240,7 @@ class Integer:
             remain.sign = remain.sign ^ carry.bits[0]
         return remain._add(carry << 1)
 
-    def _add_check_overflow(self, other: "Integer"):
+    def _add_check_overflow(self, other: "Integer") -> ("Integer", bool):
         if other.is_zero():
             return self, True
 
@@ -168,7 +250,7 @@ class Integer:
             return self, False
         return remain._add_check_overflow(carry << 1)
 
-    def __sub__(self, other: "Integer"):
+    def __sub__(self, other: "Integer") -> "Integer":
         """
         Binary Sub 연산 ( - )을 위한 operator overloading
         음수로 변경한 후 add 연산
@@ -177,7 +259,7 @@ class Integer:
         """
         return self + (-other)
 
-    def __mul__(self, other: "Integer"):
+    def __mul__(self, other: "Integer") -> "Integer":
         """
         Binary Mul 연산 ( * )을 위한 operator overloading
         덧셈의 반복으로 해결
@@ -192,7 +274,7 @@ class Integer:
         res.sign = self.sign ^ other.sign
         return res
 
-    def __truediv__(self, other: "Integer"):
+    def __truediv__(self, other: "Integer") -> "Integer":
         """
         Binary Div 연산 ( / )을 위한 operator overloading
         최고 자리수부터 shift 연산을 통해 뺄셈의 반복으로 해결
@@ -214,12 +296,12 @@ class Integer:
                 continue
             if sum_val._le(self):
                 remain += div
-                res |= Integer(1) << i
+                res |= Integer('1') << i
 
         res.sign = sign
         return res
 
-    def __le__(self, other: "Integer"):
+    def __le__(self, other: "Integer") -> bool:
         """
         Low Equal 연산 ( <= )을 위한 operator overloading
         :param other: Integer 타입 가정
@@ -232,7 +314,7 @@ class Integer:
             return other._le(self)
         return self._le(other)
 
-    def _le(self, other: "Integer"):
+    def _le(self, other: "Integer") -> bool:
         """
         Field 값만 비교
         :param other: Integer 타입 가정
@@ -243,10 +325,10 @@ class Integer:
                 return False
         return True
 
-    def __eq__(self, other: "Integer"):
+    def __eq__(self, other: "Integer") -> bool:
         return self.val() == other.val() and self.sign == other.sign
 
-    def __and__(self, other: "Integer"):
+    def __and__(self, other: "Integer") -> "Integer":
         """
         Bit And 연산( & )을 위한 operator overloading
         :param other: Integer 타입 가정
@@ -254,7 +336,7 @@ class Integer:
         """
         return Integer([self.bits[i] & other.bits[i] for i in range(self.field_len)], self.sign & other.sign)
 
-    def __xor__(self, other: "Integer"):
+    def __xor__(self, other: "Integer") -> "Integer":
         """
         Bit XOR 연산( ^ )을 위한 operator overloading
         :param other: Integer 타입 가정
@@ -262,7 +344,7 @@ class Integer:
         """
         return Integer([self.bits[i] ^ other.bits[i] for i in range(self.field_len)], self.sign ^ other.sign)
 
-    def __or__(self, other: "Integer"):
+    def __or__(self, other: "Integer") -> "Integer":
         """
         Bit OR 연산( | )을 위한 operator overloading
         :param other: Integer 타입 가정
@@ -270,7 +352,7 @@ class Integer:
         """
         return Integer([self.bits[i] | other.bits[i] for i in range(self.field_len)], self.sign | other.sign)
 
-    def __lshift__(self, num: int):
+    def __lshift__(self, num: int) -> "Integer":
         """
         num 만큼 left shift ( << ) 연산을 위한 operator overloading
         :param num: shift 하는 크기
@@ -281,7 +363,7 @@ class Integer:
             bits.append(Bit())
         return Integer(bits)
 
-    def _lshift_check_overflow(self, num: int):
+    def _lshift_check_overflow(self, num: int) -> ("Integer", bool):
         """
         Overflow를 확인하여 overflow되는 값이 있을 경우 shift 하지 않음
         :param num: shift 하는 크기
