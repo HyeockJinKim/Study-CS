@@ -1,5 +1,6 @@
 from functools import reduce
 from bit.bit import Bit
+from nums.binary import Binary
 
 
 class Integer:
@@ -18,45 +19,7 @@ class Integer:
     field_len = bit_len - 1
     limit = 2**bit_len
     frame = [2**i for i in range(bit_len-2, -1, -1)]
-    char_map = {
-        '0': None,
-        '1': [Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(),
-              Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(),
-              Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(),
-              Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(True)],
-        '2': [Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(),
-              Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(),
-              Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(),
-              Bit(), Bit(), Bit(), Bit(), Bit(), Bit(True), Bit()],
-        '3': [Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(),
-              Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(),
-              Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(),
-              Bit(), Bit(), Bit(), Bit(), Bit(), Bit(True), Bit(True)],
-        '4': [Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(),
-              Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(),
-              Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(),
-              Bit(), Bit(), Bit(), Bit(), Bit(True), Bit(), Bit()],
-        '5': [Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(),
-              Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(),
-              Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(),
-              Bit(), Bit(), Bit(), Bit(), Bit(True), Bit(), Bit(True)],
-        '6': [Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(),
-              Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(),
-              Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(),
-              Bit(), Bit(), Bit(), Bit(), Bit(True), Bit(True), Bit()],
-        '7': [Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(),
-              Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(),
-              Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(),
-              Bit(), Bit(), Bit(), Bit(), Bit(True), Bit(True), Bit(True)],
-        '8': [Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(),
-              Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(),
-              Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(),
-              Bit(), Bit(), Bit(), Bit(True), Bit(), Bit(), Bit()],
-        '9': [Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(),
-              Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(),
-              Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(),
-              Bit(), Bit(), Bit(), Bit(True), Bit(), Bit(), Bit(True)],
-    }
+    default_field = [Bit() for _ in range(field_len)]
 
     def __init__(self, bits: list or str or int = None, sign: Bit = Bit()):
         if type(bits) == str:
@@ -65,23 +28,27 @@ class Integer:
             self.bits = res.bits
         elif type(bits) == int:
             self.sign = sign
-            self.bits = [Bit() for _ in range(self.field_len)]
+            self.bits = self.default_field[::]
             self.set(bits)
         elif type(bits) == list:
             self.sign = sign
             self.bits = bits
         else:
             self.sign = sign
-            self.bits = [Bit() for _ in range(self.field_len)]
+            self.bits = self.default_field[::]
 
     def is_zero(self) -> bool:
-        return not reduce(lambda x, y: x | y, self.bits)
+        """
+        모든 비트가 0인지 확인하는 함수
+        :return: 모든 비트가 0인지 여부
+        """
+        return not self.sign and not reduce(lambda x, y: x | y, self.bits)
 
     @classmethod
     def max_value(cls) -> "Integer":
         """
         Integer 의 최대값
-        :return: Integer의 최대값 (2**32 - 1)
+        :return: Integer 의 최대값 (2**32 - 1)
         """
         max_list = [Bit(True) for _ in range(cls.field_len)]
         sign = Bit()
@@ -91,7 +58,7 @@ class Integer:
     def min_value(cls) -> "Integer":
         """
         Integer 의 최소값
-        :return: Integer의 최소값 (-(2**32 - 1))
+        :return: Integer 의 최소값 (-(2**32 - 1))
         """
         min_list = [Bit(True) for _ in range(cls.field_len)]
         sign = Bit(True)
@@ -101,6 +68,7 @@ class Integer:
         """
         int 값을 통해 integer 를 받기 위한 함수
 
+        int 값을 Bit를 통해 int로 어떻게 표현하는 지 로직 확인을 위한 함수
         deprecated
         """
         if _int < 0:
@@ -138,14 +106,15 @@ class Integer:
         :param val: 0-9의 문자열
         :return: Integer 객체
         """
-        return cls.char_map[val]
+        dec = cls.default_field[::]
+        dec[-4:] = Binary.num_map[val]
+        return dec
 
     @classmethod
     def ten(cls) -> "Integer":
-        return Integer([Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(),
-                        Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(),
-                        Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(),
-                        Bit(), Bit(), Bit(), Bit(True), Bit(), Bit(True), Bit()])
+        dec = cls.default_field[::]
+        dec[-4:] = Binary.num_map['10']
+        return Integer(dec)
 
     def val(self) -> int:
         """

@@ -1,5 +1,6 @@
 from functools import reduce
 from bit.bit import Bit
+from nums.binary import Binary
 
 
 class UnsignedInteger:
@@ -18,66 +19,32 @@ class UnsignedInteger:
     field_len = bit_len
     limit = 2**(bit_len+1)
     frame = [2**i for i in range(bit_len-1, -1, -1)]
-    char_map = {
-        '0': None,
-        '1': [Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(),
-              Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(),
-              Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(),
-              Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(True)],
-        '2': [Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(),
-              Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(),
-              Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(),
-              Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(True), Bit()],
-        '3': [Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(),
-              Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(),
-              Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(),
-              Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(True), Bit(True)],
-        '4': [Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(),
-              Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(),
-              Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(),
-              Bit(), Bit(), Bit(), Bit(), Bit(), Bit(True), Bit(), Bit()],
-        '5': [Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(),
-              Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(),
-              Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(),
-              Bit(), Bit(), Bit(), Bit(), Bit(), Bit(True), Bit(), Bit(True)],
-        '6': [Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(),
-              Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(),
-              Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(),
-              Bit(), Bit(), Bit(), Bit(), Bit(), Bit(True), Bit(True), Bit()],
-        '7': [Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(),
-              Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(),
-              Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(),
-              Bit(), Bit(), Bit(), Bit(), Bit(), Bit(True), Bit(True), Bit(True)],
-        '8': [Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(),
-              Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(),
-              Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(),
-              Bit(), Bit(), Bit(), Bit(), Bit(True), Bit(), Bit(), Bit()],
-        '9': [Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(),
-              Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(),
-              Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(),
-              Bit(), Bit(), Bit(), Bit(), Bit(True), Bit(), Bit(), Bit(True)],
-    }
+    default_field = [Bit() for _ in range(field_len)]
 
     def __init__(self, bits: list or str or int = None):
         if type(bits) == str:
             res = self.str_to_int(bits)
             self.bits = res.bits
         elif type(bits) == int:
-            self.bits = [Bit() for _ in range(self.field_len)]
+            self.bits = self.default_field[::]
             self.set(bits)
         elif type(bits) == list:
             self.bits = bits
         else:
-            self.bits = [Bit() for _ in range(self.field_len)]
+            self.bits = self.default_field[::]
 
     def is_zero(self) -> bool:
+        """
+        모든 비트가 0인지 확인하는 함수
+        :return: 모든 비트가 0인지 여부
+        """
         return not reduce(lambda x, y: x | y, self.bits)
 
     @classmethod
     def max_value(cls) -> "UnsignedInteger":
         """
         UnsignedInteger 의 최대값
-        :return: UnsignedInteger음 의 최대값 (2**33 - 1)
+        :return: UnsignedInteger 의 최대값 (2**33 - 1)
         """
         max_list = [Bit(True) for _ in range(cls.field_len)]
         return UnsignedInteger(max_list)
@@ -88,13 +55,14 @@ class UnsignedInteger:
         UnsignedInteger 의 최소값
         :return: UnsignedInteger 의 최소값 0
         """
-        min_list = [Bit(False) for _ in range(cls.field_len)]
+        min_list = cls.default_field[::]
         return UnsignedInteger(min_list)
 
     def set(self, _int: int):
         """
         int 값을 통해 unsigned integer 를 받기 위한 함수
 
+        int 값을 Bit를 통해 unsigned int로 어떻게 표현하는 지 로직 확인을 위한 함수
         deprecated
         """
         _int = _int % self.limit
@@ -128,14 +96,15 @@ class UnsignedInteger:
         :param val: 0-9의 문자열
         :return: UnsignedInteger 객체
         """
-        return cls.char_map[val]
+        dec = cls.default_field[::]
+        dec[-4:] = Binary.num_map[val]
+        return dec
 
     @classmethod
     def ten(cls) -> "UnsignedInteger":
-        return UnsignedInteger([Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(),
-                        Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(),
-                        Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(),
-                        Bit(), Bit(), Bit(), Bit(), Bit(True), Bit(), Bit(True), Bit()])
+        dec = cls.default_field[::]
+        dec[-4:] = Binary.num_map['10']
+        return UnsignedInteger(dec)
 
     def val(self) -> int:
         """
