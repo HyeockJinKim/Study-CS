@@ -81,7 +81,7 @@ class BitOperation:
         return [a[i] | b[i] for i in range(len(a))]
 
     @staticmethod
-    def lshift_bits(a: List[Bit], index: int):
+    def lshift_bits(a: List[Bit], index: int or List[Bit]):
         if index == 0:
             return a, False
         bits = a[index:]
@@ -107,3 +107,13 @@ class BitOperation:
     @staticmethod
     def empty_bits(length: int):
         return [Bit() for _ in range(length)]
+
+    @staticmethod
+    def binary_to_decimal(a: List[Bit]) -> int:
+        res = 0
+        frame = 1
+        for i, bit in enumerate(a):
+            if bit.val:
+                res += frame
+                frame <<= 1
+        return res

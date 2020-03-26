@@ -117,10 +117,7 @@ class Integer:
         테스트 및 출력을 위해 사용하는 함수
         :return: int 값으로 리턴
         """
-        res = 0
-        for i, bit in enumerate(self.bits):
-            if bit.val:
-                res += self.frame[i]
+        res = BitOperation.binary_to_decimal(self.bits)
         if self.sign:
             return -res
         return res

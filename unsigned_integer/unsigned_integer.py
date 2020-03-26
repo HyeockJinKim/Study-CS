@@ -20,13 +20,10 @@ class UnsignedInteger:
     limit = 2**(bit_len+1)
     frame = [2**i for i in range(bit_len-1, -1, -1)]
 
-    def __init__(self, bits: list or str or int = None):
+    def __init__(self, bits: list or str = None):
         if type(bits) == str:
-            res = self.str_to_int(bits)
+            res = self.str_to_unsigned_int(bits)
             self.bits = res.bits
-        elif type(bits) == int:
-            self.bits = BitOperation.empty_bits(self.field_len)
-            self._set(bits)
         elif type(bits) == list:
             self.bits = bits
         else:
@@ -57,19 +54,8 @@ class UnsignedInteger:
         min_list = BitOperation.empty_bits(cls.field_len)
         return UnsignedInteger(min_list)
 
-    def _set(self, _int: int):
-        """
-        int 값을 통해 unsigned integer 를 받기 위한 함수
-
-        int 값을 Bit를 통해 unsigned int로 어떻게 표현하는 지 로직 확인을 위한 함수
-        deprecated
-        """
-        _int = _int % self.limit
-        for i, x in enumerate(self.frame):
-            self.bits[i].set(bool(_int & x))
-
     @classmethod
-    def str_to_int(cls, val: str) -> "UnsignedInteger":
+    def str_to_unsigned_int(cls, val: str) -> "UnsignedInteger":
         """
         String 값을 통해 integer 값 read
         :param val: String 으로 표현된 정수 값 (공백이 없다는 가정)
@@ -105,11 +91,7 @@ class UnsignedInteger:
         음수 값이 없으므로 모두 양수 읽는 것처럼 읽
         :return:
         """
-        res = 0
-        for i, bit in enumerate(self.bits):
-            if bit.val:
-                res += self.frame[i]
-        return res
+        return BitOperation.binary_to_decimal(self.bits)
 
     def __str__(self) -> str:
         return str(self.val())
