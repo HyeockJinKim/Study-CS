@@ -6,18 +6,24 @@
 
 컴퓨터 구조의 1 bit 처리를 위한 구현
 
-### [1. Integer][integer]
+### [1. number][number]
+> Bit의 연산 구현 
+
+Bitwise 연산 및 사칙연산 구현
+
+### [2. Integer][integer]
 > Bit 단위의 Integer 구현
 
 Singed integer의 비트 단위의 값 처리를 확인
 
-### [2. Unsigned Integer][unsigned_integer]
+### [3. Unsigned Integer][unsigned_integer]
 > Bit 단위의 Unsigned Integer 구현
 
 Unsigned integer의 비트 단위의 값 처리를 확인
 
 
 [bit]: ./bit/README.md
+[number]: ./nums/README.md
 [integer]: ./integer/README.md
 [unsigned_integer]: ./unsigned_integer/README.md
 
