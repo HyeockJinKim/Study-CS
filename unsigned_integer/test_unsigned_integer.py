@@ -37,20 +37,6 @@ def test_unsigned_integer_plus4():
     assert unsigned_integer1 + unsigned_integer2 == UnsignedInteger('15')
 
 
-def test_unsigned_integer_complement1():
-    unsigned_integer = UnsignedInteger('-3')
-    bit_list = [Bit(True) for _ in range(UnsignedInteger.field_len)]
-    bit_list[-2] = Bit(False)
-
-    for i, bit in enumerate(bit_list):
-        assert unsigned_integer.bits[i] == bit
-
-
-def test_unsigned_integer_complement2():
-    unsigned_integer = UnsignedInteger('3')
-    assert unsigned_integer.complement() == UnsignedInteger('-3')
-
-
 def test_unsigned_integer_multiplication():
     unsigned_integer1 = UnsignedInteger('107')
     unsigned_integer2 = UnsignedInteger('97')

@@ -1,5 +1,4 @@
 import pytest
-
 from integer.integer import Integer, Bit
 
 
@@ -35,20 +34,6 @@ def test_integer_plus4():
     integer1 = Integer('25')
     integer2 = Integer('-10')
     assert integer1 + integer2 == Integer('15')
-
-
-def test_integer_complement1():
-    integer = Integer('-3')
-    bit_list = [Bit(True) for _ in range(Integer.field_len)]
-    bit_list[-2] = Bit(False)
-
-    for i, bit in enumerate(bit_list):
-        assert integer.complement().bits[i] == bit
-
-
-def test_integer_complement2():
-    integer = Integer('-3')
-    assert integer.complement().decomplement() == integer
 
 
 def test_integer_multiplication1():

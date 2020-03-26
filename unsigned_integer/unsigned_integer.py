@@ -1,6 +1,6 @@
-from functools import reduce
 from bit.bit import Bit
-from nums.binary import Binary
+from nums.arithmetic import Arithmetic
+from nums.bit_operation import BitOperation
 
 
 class UnsignedInteger:
@@ -19,26 +19,25 @@ class UnsignedInteger:
     field_len = bit_len
     limit = 2**(bit_len+1)
     frame = [2**i for i in range(bit_len-1, -1, -1)]
-    default_field = [Bit() for _ in range(field_len)]
 
     def __init__(self, bits: list or str or int = None):
         if type(bits) == str:
             res = self.str_to_int(bits)
             self.bits = res.bits
         elif type(bits) == int:
-            self.bits = self.default_field[::]
-            self.set(bits)
+            self.bits = BitOperation.empty_bits(self.field_len)
+            self._set(bits)
         elif type(bits) == list:
             self.bits = bits
         else:
-            self.bits = self.default_field[::]
+            self.bits = BitOperation.empty_bits(self.field_len)
 
     def is_zero(self) -> bool:
         """
         모든 비트가 0인지 확인하는 함수
         :return: 모든 비트가 0인지 여부
         """
-        return not reduce(lambda x, y: x | y, self.bits)
+        return BitOperation.is_empty(self.bits)
 
     @classmethod
     def max_value(cls) -> "UnsignedInteger":
@@ -55,10 +54,10 @@ class UnsignedInteger:
         UnsignedInteger 의 최소값
         :return: UnsignedInteger 의 최소값 0
         """
-        min_list = cls.default_field[::]
+        min_list = BitOperation.empty_bits(cls.field_len)
         return UnsignedInteger(min_list)
 
-    def set(self, _int: int):
+    def _set(self, _int: int):
         """
         int 값을 통해 unsigned integer 를 받기 위한 함수
 
@@ -76,6 +75,7 @@ class UnsignedInteger:
         :param val: String 으로 표현된 정수 값 (공백이 없다는 가정)
         :return: UnsignedInteger 의 값
         """
+        ten = UnsignedInteger(cls.char_to_dec('10'))
         if val[0] == '-':
             sign = Bit(True)
             val = val[1:]
@@ -83,10 +83,11 @@ class UnsignedInteger:
             sign = Bit()
         res = UnsignedInteger()
         for c in val:
-            res = res * cls.ten() + UnsignedInteger(cls.char_to_dec(c))
+            res = res * ten + UnsignedInteger(cls.char_to_dec(c))
 
         if sign:
-            return res.complement()
+            res, _ = Arithmetic.complement_bits(res.bits)
+            return UnsignedInteger(res)
         return res
 
     @classmethod
@@ -96,15 +97,7 @@ class UnsignedInteger:
         :param val: 0-9의 문자열
         :return: UnsignedInteger 객체
         """
-        dec = cls.default_field[::]
-        dec[-4:] = Binary.num_map[val]
-        return dec
-
-    @classmethod
-    def ten(cls) -> "UnsignedInteger":
-        dec = cls.default_field[::]
-        dec[-4:] = Binary.num_map['10']
-        return UnsignedInteger(dec)
+        return BitOperation.fit_bits(BitOperation.num_map[val], cls.field_len)
 
     def val(self) -> int:
         """
@@ -121,14 +114,6 @@ class UnsignedInteger:
     def __str__(self) -> str:
         return str(self.val())
 
-    def complement(self) -> "UnsignedInteger":
-        """
-        뺄셈을 위한 2의 보수 계산
-        :return: 2의 보수 값
-        """
-        res = ~self
-        return res + UnsignedInteger('1')
-
     def __invert__(self) -> "UnsignedInteger":
         """
         Bit invert 연산( ~ )을 위한 operator overloading
@@ -143,7 +128,7 @@ class UnsignedInteger:
         2의 보수를 취한 값을 가짐
         :return: 새로운 UnsignedInteger 객체로 return
         """
-        return self.complement()
+        return UnsignedInteger(Arithmetic.complement_bits(self.bits))
 
     def __add__(self, other: "UnsignedInteger") -> "UnsignedInteger":
         """
@@ -151,22 +136,9 @@ class UnsignedInteger:
         :param other: UnsignedInteger 타입 가정
         :return: 새로운 UnsignedInteger 객체로 return
         """
-        if other.is_zero():
-            return self
 
-        carry = self & other
-        remain = self ^ other
-        return remain + (carry << 1)
-
-    def _add_check_overflow(self, other: "UnsignedInteger") -> ("UnsignedInteger", bool):
-        if other.is_zero():
-            return self, True
-
-        carry = self & other
-        remain = self ^ other
-        if carry.bits[0]:
-            return self, False
-        return remain._add_check_overflow(carry << 1)
+        res, _ = Arithmetic.add_bits(self.bits, other.bits)
+        return UnsignedInteger(res)
 
     def __sub__(self, other: "UnsignedInteger") -> "UnsignedInteger":
         """
@@ -185,11 +157,7 @@ class UnsignedInteger:
         :return: 새로운 UnsignedInteger 객체로 return
         """
 
-        res = UnsignedInteger()
-        for i, bit in enumerate(other.bits[::-1]):
-            if bit:
-                res += self << i
-        return res
+        return UnsignedInteger(Arithmetic.mul_bits(self.bits, other.bits))
 
     def __truediv__(self, other: "UnsignedInteger") -> "UnsignedInteger":
         """
@@ -198,26 +166,7 @@ class UnsignedInteger:
         :param other: UnsignedInteger 타입 가정
         :return: 새로운 UnsignedInteger 객체로 return
         """
-        if other.is_zero():
-            raise ZeroDivisionError()
-
-        remain = UnsignedInteger()
-        res = UnsignedInteger()
-        for i in range(self.field_len-1, -1, -1):
-            div, suc = other._lshift_check_overflow(i)
-            if not suc:
-                continue
-            if div.is_zero():
-                continue
-
-            sum_val, suc = remain._add_check_overflow(div)
-            if not suc:
-                continue
-            if sum_val <= self:
-                remain += div
-                res |= UnsignedInteger('1') << i
-
-        return res
+        return UnsignedInteger(Arithmetic.div_bits(self.bits, other.bits))
 
     def __le__(self, other: "UnsignedInteger") -> bool:
         """
@@ -225,13 +174,10 @@ class UnsignedInteger:
         :param other: UnsignedInteger 타입 가정
         :return: 새로운 UnsignedInteger 객체로 return
         """
-        for i in range(self.field_len - 1, -1, -1):
-            if self.bits[i] > other.bits[i]:
-                return False
-        return True
+        return BitOperation.le_bits(self.bits, other.bits)
 
     def __eq__(self, other: "UnsignedInteger") -> bool:
-        return self.val() == other.val()
+        return BitOperation.eq_bits(self.bits, other.bits)
 
     def __and__(self, other: "UnsignedInteger") -> "UnsignedInteger":
         """
@@ -239,7 +185,7 @@ class UnsignedInteger:
         :param other: UnsignedInteger 타입 가정
         :return: 새로운 UnsignedInteger 객체로 return
         """
-        return UnsignedInteger([self.bits[i] & other.bits[i] for i in range(self.field_len)])
+        return UnsignedInteger(BitOperation.and_bits(self.bits, other.bits))
 
     def __xor__(self, other: "UnsignedInteger") -> "UnsignedInteger":
         """
@@ -247,7 +193,7 @@ class UnsignedInteger:
         :param other: UnsignedInteger 타입 가정
         :return: 새로운 UnsignedInteger 객체로 return
         """
-        return UnsignedInteger([self.bits[i] ^ other.bits[i] for i in range(self.field_len)])
+        return UnsignedInteger(BitOperation.xor_bits(self.bits, other.bits))
 
     def __or__(self, other: "UnsignedInteger") -> "UnsignedInteger":
         """
@@ -255,7 +201,7 @@ class UnsignedInteger:
         :param other: UnsignedInteger 타입 가정
         :return: 새로운 UnsignedInteger 객체로 return
         """
-        return UnsignedInteger([self.bits[i] | other.bits[i] for i in range(self.field_len)])
+        return UnsignedInteger(BitOperation.or_bits(self.bits, other.bits))
 
     def __lshift__(self, num: int) -> "UnsignedInteger":
         """
@@ -263,19 +209,5 @@ class UnsignedInteger:
         :param num: shift 하는 크기
         :return: 새로운 UnsignedInteger 객체로 return
         """
-        bits = self.bits[num:]
-        for _ in range(num):
-            bits.append(Bit())
-        return UnsignedInteger(bits)
-
-    def _lshift_check_overflow(self, num: int) -> ("UnsignedInteger", bool):
-        """
-        Overflow 를 확인하여 overflow 되는 값이 있을 경우 shift 하지 않음
-        :param num: shift 하는 크기
-        :return: 새로운 Integer 객체로 return
-        """
-        for bit in self.bits[:num]:
-            if bit:
-                return self, False
-
-        return self << num, True
+        res, _ = BitOperation.lshift_bits(self.bits, num)
+        return UnsignedInteger(res)
