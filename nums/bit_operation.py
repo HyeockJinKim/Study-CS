@@ -6,14 +6,14 @@ from bit.bit import Bit
 
 class BitOperation:
     num_map = {
-        '0': [Bit(), Bit(), Bit(), Bit()],
-        '1': [Bit(), Bit(), Bit(), Bit(True)],
-        '2': [Bit(), Bit(), Bit(True), Bit()],
-        '3': [Bit(), Bit(), Bit(True), Bit(True)],
-        '4': [Bit(), Bit(True), Bit(), Bit()],
-        '5': [Bit(), Bit(True), Bit(), Bit(True)],
-        '6': [Bit(), Bit(True), Bit(True), Bit()],
-        '7': [Bit(), Bit(True), Bit(True), Bit(True)],
+        '0': [],
+        '1': [Bit(True)],
+        '2': [Bit(True), Bit()],
+        '3': [Bit(True), Bit(True)],
+        '4': [Bit(True), Bit(), Bit()],
+        '5': [Bit(True), Bit(), Bit(True)],
+        '6': [Bit(True), Bit(True), Bit()],
+        '7': [Bit(True), Bit(True), Bit(True)],
         '8': [Bit(True), Bit(), Bit(), Bit()],
         '9': [Bit(True), Bit(), Bit(), Bit(True)],
         '10': [Bit(True), Bit(), Bit(True), Bit()],
@@ -85,11 +85,21 @@ class BitOperation:
         if type(index) == list:
             index = BitOperation.binary_to_decimal(index)
         if index == 0:
-            return a, False
+            return a, Bit()
         bits = a[index:]
         for _ in range(index):
             bits.append(Bit())
-        return bits, not BitOperation.is_empty(a[:index])
+        return bits, Bit(not BitOperation.is_empty(a[:index]))
+
+    @staticmethod
+    def lshift_bits_with_overflow(a: List[Bit], index: int or List[Bit]):
+        if type(index) == list:
+            index = BitOperation.binary_to_decimal(index)
+
+        bits = a[::]
+        for _ in range(index):
+            bits.append(Bit())
+        return bits
 
     @staticmethod
     def neg_bits(a: List[Bit]):
@@ -116,8 +126,8 @@ class BitOperation:
     def binary_to_decimal(a: List[Bit]) -> int:
         res = 0
         frame = 1
-        for i, bit in enumerate(a):
-            if bit.val:
+        for bit in a[::-1]:
+            if bit:
                 res += frame
-                frame <<= 1
+            frame <<= 1
         return res

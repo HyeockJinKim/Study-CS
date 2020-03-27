@@ -24,12 +24,12 @@ class Arithmetic:
     def _add_bits(a: List[Bit], b: List[Bit]) -> (List[Bit], Bit):
         if BitOperation.is_empty(b):
             return a, Bit()
-        carry = BitOperation.and_bits(a, b)
+        carry_0 = BitOperation.and_bits(a, b)
         remain = BitOperation.xor_bits(a, b)
-        carry, _ = BitOperation.lshift_bits(carry, 1)
+        carry, _ = BitOperation.lshift_bits(carry_0, 1)
 
         res, overflow = Arithmetic._add_bits(remain, carry)
-        return res, overflow ^ carry[0]
+        return res, overflow ^ carry_0[0]
 
     @staticmethod
     def mul_bits(a: List[Bit], b: List[Bit]) -> List[Bit]:
@@ -43,6 +43,17 @@ class Arithmetic:
             if bit:
                 mul2, _ = BitOperation.lshift_bits(a, i)
                 res, _ = Arithmetic.add_bits(res, mul2)
+        return res
+
+    @staticmethod
+    def _mul_bits_with_overflow(a: List[Bit], b: List[Bit]) -> List[Bit]:
+        res = BitOperation.empty_bits(len(a))
+        for i, bit in enumerate(b[::-1]):
+            if bit:
+                mul2 = BitOperation.lshift_bits_with_overflow(a, i)
+                res, overflow = Arithmetic.add_bits(res, mul2)
+                if overflow:
+                    res.insert(0, overflow)
         return res
 
     @staticmethod
@@ -76,11 +87,24 @@ class Arithmetic:
     @staticmethod
     def str_to_integer(val: str) -> (List[Bit], Bit):
         # TODO: Should be changed
-        res = BitOperation.empty_bits(32)
+        res = BitOperation.num_map['0']
         ten = BitOperation.num_map['10']
-        overflow = Bit()
         for c in val:
-            res = Arithmetic.mul_bits(res, ten)
+            res = Arithmetic._mul_bits_with_overflow(res, ten)
             res, res2 = Arithmetic.add_bits(res, BitOperation.num_map[c])
-            overflow ^= res2
-        return res, overflow
+            if res2:
+                res.insert(0, res2)
+        return res
+
+"""
+2 2147483647 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0]
+1 2147483647 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1]
+4 2147483647 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 0, 1, 1, 0]
+7 2147483647 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 1, 1] // ** durl
+4 2147483647 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 1, 0]
+8 2147483647 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 0, 0, 0, 1, 1, 0, 1, 1, 0, 1, 1, 1, 0, 0]
+3 2147483647 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 1, 0, 1, 1]
+6 2147483647 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0]
+4 2147483647 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0]
+7 2147483647 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+"""

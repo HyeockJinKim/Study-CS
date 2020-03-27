@@ -92,8 +92,10 @@ class Integer:
         else:
             sign = Bit()
 
-        bits, overflow = Arithmetic.str_to_integer(val)
-        sign ^= overflow
+        bits = Arithmetic.str_to_integer(val)
+        if len(bits) > cls.field_len:
+            sign ^= bits[-cls.field_len-1]
+
         bits = BitOperation.fit_bits(bits, cls.field_len)
         return Integer(bits, sign)
 
