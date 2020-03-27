@@ -61,20 +61,18 @@ class UnsignedInteger:
         :param val: String 으로 표현된 정수 값 (공백이 없다는 가정)
         :return: UnsignedInteger 의 값
         """
-        ten = UnsignedInteger(cls.char_to_dec('10'))
         if val[0] == '-':
             sign = Bit(True)
             val = val[1:]
         else:
             sign = Bit()
-        res = UnsignedInteger()
-        for c in val:
-            res = res * ten + UnsignedInteger(cls.char_to_dec(c))
+        res = Arithmetic.str_to_integer(val)
+        res = BitOperation.fit_bits(res, cls.field_len)
 
         if sign:
-            res, _ = Arithmetic.complement_bits(res.bits)
+            res, _ = Arithmetic.complement_bits(res)
             return UnsignedInteger(res)
-        return res
+        return UnsignedInteger(res)
 
     @classmethod
     def char_to_dec(cls, val: str) -> list:
