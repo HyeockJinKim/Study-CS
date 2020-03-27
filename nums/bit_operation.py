@@ -82,6 +82,8 @@ class BitOperation:
 
     @staticmethod
     def lshift_bits(a: List[Bit], index: int or List[Bit]):
+        if type(index) == list:
+            index = BitOperation.binary_to_decimal(index)
         if index == 0:
             return a, False
         bits = a[index:]
@@ -95,6 +97,8 @@ class BitOperation:
 
     @staticmethod
     def fit_bits(a: List[Bit], length: int):
+        if len(a) >= length:
+            return a[-length:]
         empty = BitOperation.empty_bits(length)
         for i in range(1, len(a)+1):
             empty[-i] = a[-i]

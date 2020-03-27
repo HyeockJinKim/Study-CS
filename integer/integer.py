@@ -86,19 +86,16 @@ class Integer:
         :param val: String 으로 표현된 정수 값 (공백이 없다는 가정)
         :return: Integer 의 값
         """
-        ten = Integer(cls.char_to_dec('10'))
-
         if val[0] == '-':
             sign = Bit(True)
             val = val[1:]
         else:
             sign = Bit()
-        res = Integer()
-        for c in val:
-            res = res * ten + Integer(cls.char_to_dec(c))
 
-        res.sign = sign
-        return res
+        bits, overflow = Arithmetic.str_to_integer(val)
+        sign ^= overflow
+        bits = BitOperation.fit_bits(bits, cls.field_len)
+        return Integer(bits, sign)
 
     @classmethod
     def char_to_dec(cls, val: str) -> list:

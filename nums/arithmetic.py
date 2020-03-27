@@ -72,3 +72,15 @@ class Arithmetic:
                 res = BitOperation.or_bits(res, quotient)
 
         return res
+
+    @staticmethod
+    def str_to_integer(val: str) -> (List[Bit], Bit):
+        # TODO: Should be changed
+        res = BitOperation.empty_bits(32)
+        ten = BitOperation.num_map['10']
+        overflow = Bit()
+        for c in val:
+            res = Arithmetic.mul_bits(res, ten)
+            res, res2 = Arithmetic.add_bits(res, BitOperation.num_map[c])
+            overflow ^= res2
+        return res, overflow
