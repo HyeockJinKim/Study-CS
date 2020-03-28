@@ -34,6 +34,12 @@ class Arithmetic:
         return res, overflow ^ carry_0[0]
 
     @staticmethod
+    def sub_bits(a: List[Bit], b: List[Bit], length: int) -> (List[Bit], Bit):
+        a, b = BitOperation.equalize_bit_length(a, b, length)
+        b, _ = Arithmetic.complement_bits(b, length)
+        return Arithmetic.raw_add_bits(a, b)
+
+    @staticmethod
     def mul_bits(a: List[Bit], b: List[Bit], length: int) -> List[Bit]:
         a, b = BitOperation.equalize_bit_length(a, b, length)
         return Arithmetic.raw_mul_bits(a, b)
@@ -45,17 +51,6 @@ class Arithmetic:
             if bit:
                 mul2 = BitOperation.raw_lshift_bits(a, i)
                 res, _ = Arithmetic.raw_add_bits(res, mul2)
-        return res
-
-    @staticmethod
-    def _mul_bits_with_overflow(a: List[Bit], b: List[Bit]) -> List[Bit]:
-        res = BitOperation.empty_bits(len(a))
-        for i, bit in enumerate(b[::-1]):
-            if bit:
-                mul2 = BitOperation.raw_lshift_bits(a, i)
-                res, overflow = Arithmetic.raw_add_bits(res, mul2)
-                if overflow:
-                    res.insert(0, overflow)
         return res
 
     @staticmethod
@@ -89,11 +84,55 @@ class Arithmetic:
 
     @staticmethod
     def str_to_integer(val: str, length: int) -> (List[Bit], Bit):
-        res = BitOperation.num_map['0']
-        ten = BitOperation.num_map['10']
+        res, ten = BitOperation.equalize_bit_length(BitOperation.num_map['0'], BitOperation.num_map['10'], length)
         for c in val:
-            res = Arithmetic.mul_bits(res, ten, length)
-            res, res2 = Arithmetic.add_bits(res, BitOperation.num_map[c], length)
-            if res2:
-                res.insert(0, res2)
+            res = Arithmetic.raw_mul_bits(res, ten)
+            res, _ = Arithmetic.add_bits(res, BitOperation.num_map[c], length)
         return res
+
+    @staticmethod
+    def str_to_integer_until_overflow(val: str, length: int):
+        res, ten = BitOperation.equalize_bit_length(BitOperation.num_map['0'], BitOperation.num_map['10'], length)
+        for i, c in enumerate(val):
+            res = Arithmetic.raw_mul_bits(res, ten)
+            res, res2 = Arithmetic.add_bits(res, BitOperation.num_map[c], length)
+
+            if res2:
+                return res, len(val) - i
+        return res, length - BitOperation.first_bit_index(res) - 1
+
+    @staticmethod
+    def str_to_minor(real: List[Bit], val: str, digit: List[Bit], length: int):
+        real, ten = BitOperation.equalize_bit_length(real, BitOperation.num_map['10'], length)
+        base = BitOperation.fit_bits(BitOperation.num_map['1'], length)
+        twenty = BitOperation.raw_lshift_bits(ten, 1)
+        remain = BitOperation.empty_bits(length)
+        shift = 1
+        index = 0
+        while True:
+            if index < len(val):
+                remain = Arithmetic.raw_mul_bits(remain, twenty)
+                next_digit = BitOperation.lshift_bits(BitOperation.num_map[val[index]], shift, length)
+                remain, _ = Arithmetic.raw_add_bits(remain, next_digit)
+                base = Arithmetic.raw_mul_bits(base, ten)
+                index += 1
+                shift += 1
+            else:
+                remain = BitOperation.raw_lshift_bits(remain, 1)
+
+            if BitOperation.first_bit_index(real) == 0:
+                real = BitOperation.raw_lshift_bits(real, 1)
+                if not BitOperation.is_empty(remain):
+                    real, _ = Arithmetic.add_bits(real, BitOperation.num_map['1'], length)
+                break
+
+            real = BitOperation.raw_lshift_bits(real, 1)
+            if BitOperation.raw_ge_bits(remain, base):
+                real, _ = Arithmetic.add_bits(real, BitOperation.num_map['1'], length)
+                remain, _ = Arithmetic.sub_bits(remain, base, length)
+
+            if BitOperation.is_empty(real):
+                digit -= 1
+                continue
+
+        return real, digit

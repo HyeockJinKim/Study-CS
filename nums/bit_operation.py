@@ -52,6 +52,20 @@ class BitOperation:
         return True
 
     @staticmethod
+    def ge_bits(a: List[Bit], b: List[Bit], length: int) -> bool:
+        a, b = BitOperation.equalize_bit_length(a, b, length)
+        return BitOperation.raw_ge_bits(a, b)
+
+    @staticmethod
+    def raw_ge_bits(a: List[Bit], b: List[Bit]) -> bool:
+        for i in range(len(a)):
+            if a[i] > b[i]:
+                return True
+            if b[i] > a[i]:
+                return False
+        return True
+
+    @staticmethod
     def and_bits(a: List[Bit], b: List[Bit], length: int) -> List[Bit]:
         a, b = BitOperation.equalize_bit_length(a, b, length)
         return BitOperation.raw_and_bits(a, b)
