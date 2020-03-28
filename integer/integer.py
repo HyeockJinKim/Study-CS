@@ -92,7 +92,7 @@ class Integer:
         else:
             sign = Bit()
 
-        bits = Arithmetic.str_to_integer(val)
+        bits = Arithmetic.str_to_integer(val, cls.field_len)
         if len(bits) > cls.field_len:
             sign ^= bits[-cls.field_len-1]
 
@@ -154,18 +154,18 @@ class Integer:
         :return: 새로운 Integer 객체로 return
         """
         if self.is_negative():
-            a_bits, _ = Arithmetic.complement_bits(self.bits)
+            a_bits, _ = Arithmetic.complement_bits(self.bits, self.field_len)
         else:
             a_bits = self.bits[::]
         if other.is_negative():
-            b_bits, _ = Arithmetic.complement_bits(other.bits)
+            b_bits, _ = Arithmetic.complement_bits(other.bits, self.field_len)
         else:
             b_bits = other.bits[::]
 
-        res, overflow = Arithmetic.add_bits(a_bits, b_bits)
+        res, overflow = Arithmetic.add_bits(a_bits, b_bits, self.field_len)
         sign = self.sign ^ other.sign ^ overflow
         if sign:
-            return Integer(Arithmetic.decomplement_bits(res), sign)
+            return Integer(Arithmetic.decomplement_bits(res, self.field_len), sign)
         return Integer(res, sign)
 
     def __sub__(self, other: "Integer") -> "Integer":
@@ -184,7 +184,7 @@ class Integer:
         :param other: Integer 타입 가정
         :return: 새로운 Integer 객체로 return
         """
-        return Integer(Arithmetic.mul_bits(self.bits, other.bits), self.sign ^ other.sign)
+        return Integer(Arithmetic.mul_bits(self.bits, other.bits, self.field_len), self.sign ^ other.sign)
 
     def __truediv__(self, other: "Integer") -> "Integer":
         """
@@ -193,7 +193,7 @@ class Integer:
         :param other: Integer 타입 가정
         :return: 새로운 Integer 객체로 return
         """
-        return Integer(Arithmetic.div_bits(self.bits, other.bits), self.sign ^ other.sign)
+        return Integer(Arithmetic.div_bits(self.bits, other.bits, self.field_len), self.sign ^ other.sign)
 
     def __le__(self, other: "Integer") -> bool:
         """
@@ -205,11 +205,11 @@ class Integer:
             return self.sign == Bit()
 
         if self.is_negative():
-            return BitOperation.le_bits(other.bits, self.bits)
-        return BitOperation.le_bits(self.bits, other.bits)
+            return BitOperation.le_bits(other.bits, self.bits, self.field_len)
+        return BitOperation.le_bits(self.bits, other.bits, self.field_len)
 
     def __eq__(self, other: "Integer") -> bool:
-        return self.sign == other.sign and BitOperation.eq_bits(self.bits, other.bits)
+        return self.sign == other.sign and BitOperation.eq_bits(self.bits, other.bits, self.field_len)
 
     def __and__(self, other: "Integer") -> "Integer":
         """
@@ -217,7 +217,7 @@ class Integer:
         :param other: Integer 타입 가정
         :return: 새로운 Integer 객체로 return
         """
-        return Integer(BitOperation.and_bits(self.bits, other.bits), self.sign & other.sign)
+        return Integer(BitOperation.and_bits(self.bits, other.bits, self.field_len), self.sign & other.sign)
 
     def __xor__(self, other: "Integer") -> "Integer":
         """
@@ -225,7 +225,7 @@ class Integer:
         :param other: Integer 타입 가정
         :return: 새로운 Integer 객체로 return
         """
-        return Integer(BitOperation.xor_bits(self.bits, other.bits), self.sign ^ other.sign)
+        return Integer(BitOperation.xor_bits(self.bits, other.bits, self.field_len), self.sign ^ other.sign)
 
     def __or__(self, other: "Integer") -> "Integer":
         """
@@ -233,7 +233,7 @@ class Integer:
         :param other: Integer 타입 가정
         :return: 새로운 Integer 객체로 return
         """
-        return Integer(BitOperation.or_bits(self.bits, other.bits), self.sign | other.sign)
+        return Integer(BitOperation.or_bits(self.bits, other.bits, self.field_len), self.sign | other.sign)
 
     def __lshift__(self, num: int) -> "Integer":
         """
@@ -241,5 +241,5 @@ class Integer:
         :param num: shift 하는 크기
         :return: 새로운 Integer 객체로 return
         """
-        res, _ = BitOperation.lshift_bits(self.bits, num)
+        res, _ = BitOperation.lshift_bits(self.bits, num, self.field_len)
         return Integer(res)

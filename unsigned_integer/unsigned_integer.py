@@ -66,11 +66,11 @@ class UnsignedInteger:
             val = val[1:]
         else:
             sign = Bit()
-        res = Arithmetic.str_to_integer(val)
+        res = Arithmetic.str_to_integer(val, cls.field_len)
         res = BitOperation.fit_bits(res, cls.field_len)
 
         if sign:
-            res, _ = Arithmetic.complement_bits(res)
+            res, _ = Arithmetic.complement_bits(res, cls.field_len)
             return UnsignedInteger(res)
         return UnsignedInteger(res)
 
@@ -108,7 +108,7 @@ class UnsignedInteger:
         2의 보수를 취한 값을 가짐
         :return: 새로운 UnsignedInteger 객체로 return
         """
-        return UnsignedInteger(Arithmetic.complement_bits(self.bits))
+        return UnsignedInteger(Arithmetic.complement_bits(self.bits, self.field_len))
 
     def __add__(self, other: "UnsignedInteger") -> "UnsignedInteger":
         """
@@ -117,7 +117,7 @@ class UnsignedInteger:
         :return: 새로운 UnsignedInteger 객체로 return
         """
 
-        res, _ = Arithmetic.add_bits(self.bits, other.bits)
+        res, _ = Arithmetic.add_bits(self.bits, other.bits, self.field_len)
         return UnsignedInteger(res)
 
     def __sub__(self, other: "UnsignedInteger") -> "UnsignedInteger":
@@ -137,7 +137,7 @@ class UnsignedInteger:
         :return: 새로운 UnsignedInteger 객체로 return
         """
 
-        return UnsignedInteger(Arithmetic.mul_bits(self.bits, other.bits))
+        return UnsignedInteger(Arithmetic.mul_bits(self.bits, other.bits, self.field_len))
 
     def __truediv__(self, other: "UnsignedInteger") -> "UnsignedInteger":
         """
@@ -146,7 +146,7 @@ class UnsignedInteger:
         :param other: UnsignedInteger 타입 가정
         :return: 새로운 UnsignedInteger 객체로 return
         """
-        return UnsignedInteger(Arithmetic.div_bits(self.bits, other.bits))
+        return UnsignedInteger(Arithmetic.div_bits(self.bits, other.bits, self.field_len))
 
     def __le__(self, other: "UnsignedInteger") -> bool:
         """
@@ -154,10 +154,10 @@ class UnsignedInteger:
         :param other: UnsignedInteger 타입 가정
         :return: 새로운 UnsignedInteger 객체로 return
         """
-        return BitOperation.le_bits(self.bits, other.bits)
+        return BitOperation.le_bits(self.bits, other.bits, self.field_len)
 
     def __eq__(self, other: "UnsignedInteger") -> bool:
-        return BitOperation.eq_bits(self.bits, other.bits)
+        return BitOperation.eq_bits(self.bits, other.bits, self.field_len)
 
     def __and__(self, other: "UnsignedInteger") -> "UnsignedInteger":
         """
@@ -165,7 +165,7 @@ class UnsignedInteger:
         :param other: UnsignedInteger 타입 가정
         :return: 새로운 UnsignedInteger 객체로 return
         """
-        return UnsignedInteger(BitOperation.and_bits(self.bits, other.bits))
+        return UnsignedInteger(BitOperation.and_bits(self.bits, other.bits, self.field_len))
 
     def __xor__(self, other: "UnsignedInteger") -> "UnsignedInteger":
         """
@@ -173,7 +173,7 @@ class UnsignedInteger:
         :param other: UnsignedInteger 타입 가정
         :return: 새로운 UnsignedInteger 객체로 return
         """
-        return UnsignedInteger(BitOperation.xor_bits(self.bits, other.bits))
+        return UnsignedInteger(BitOperation.xor_bits(self.bits, other.bits, self.field_len))
 
     def __or__(self, other: "UnsignedInteger") -> "UnsignedInteger":
         """
@@ -181,7 +181,7 @@ class UnsignedInteger:
         :param other: UnsignedInteger 타입 가정
         :return: 새로운 UnsignedInteger 객체로 return
         """
-        return UnsignedInteger(BitOperation.or_bits(self.bits, other.bits))
+        return UnsignedInteger(BitOperation.or_bits(self.bits, other.bits, self.field_len))
 
     def __lshift__(self, num: int) -> "UnsignedInteger":
         """
@@ -189,5 +189,5 @@ class UnsignedInteger:
         :param num: shift 하는 크기
         :return: 새로운 UnsignedInteger 객체로 return
         """
-        res, _ = BitOperation.lshift_bits(self.bits, num)
+        res, _ = BitOperation.lshift_bits(self.bits, num, self.field_len)
         return UnsignedInteger(res)
