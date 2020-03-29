@@ -107,6 +107,26 @@ class BitOperation:
         return bits
 
     @staticmethod
+    def rshift_bits(a: List[Bit], index: int or List[Bit], length: int) -> List[Bit]:
+        if type(index) == list:
+            index = BitOperation.binary_to_decimal(index)
+
+        a = BitOperation.fit_bits(a, length)
+        return BitOperation.raw_rshift_bits(a, index)
+
+    @staticmethod
+    def raw_rshift_bits(a: List[Bit], index: int) -> List[Bit]:
+        bits = BitOperation.empty_bits(len(a))
+        bits[index:] = a[:len(a) - index]
+        return bits
+
+    @staticmethod
+    def fraction_bits(a: List[Bit]) -> List[Bit]:
+        frac = a[::]
+        frac.insert(0, Bit(True))
+        return frac
+
+    @staticmethod
     def neg_bits(a: List[Bit]) -> List[Bit]:
         return [~bit for bit in a]
 
@@ -124,6 +144,8 @@ class BitOperation:
 
     @staticmethod
     def is_empty(a: List[Bit]) -> bool:
+        if not a:
+            return True
         return not reduce(lambda x, y: x | y, a)
 
     @staticmethod
@@ -138,6 +160,18 @@ class BitOperation:
             if bit:
                 res += frame
             frame <<= 1
+        return res
+
+    @staticmethod
+    def binary_to_float(exp: List[Bit], fraction: List[Bit]) -> int:
+        res = 0
+        exp = BitOperation.binary_to_decimal(exp) - 127 - len(fraction)
+        frame = 2 ** exp
+        for bit in fraction[::-1]:
+            if bit:
+                res += frame
+            frame *= 2
+        res += frame
         return res
 
     @staticmethod

@@ -61,6 +61,7 @@ class Float:
         2 ** ((1.fraction)(유효숫자 수)) ** (2 ** (exponent 절반))
         :return: Float 의 최대값 ((2**(23+1))**(2**7-1))
         """
+
         sign = Bit()
         exponent = [Bit(True) for _ in range(cls.exponent_len)]
         fraction = [Bit(True) for _ in range(cls.fraction_len)]
@@ -74,6 +75,7 @@ class Float:
         - 2 ** ((1.fraction)(유효숫자 수)) ** (2 ** (exponent 절반))
         :return: Float 의 최소값 (-(2**(23+1))**(2**7-1))
         """
+
         sign = Bit(True)
         exponent = [Bit(True) for _ in range(cls.exponent_len)]
         fraction = [Bit(True) for _ in range(cls.fraction_len)]
@@ -86,6 +88,7 @@ class Float:
         float 값을 Bit를 통해 float로 어떻게 표현하는 지 로직 확인을 위한 함수
         deprecated
         """
+
         if _float < 0:
             self.sign = Bit(True)
             _float = -_float
@@ -121,6 +124,7 @@ class Float:
         :param val: String 으로 표현된 정수 값 (공백이 없다는 가정)
         :return: Float 의 값
         """
+
         if val[0] == '-':
             sign = Bit(True)
             val = val[1:]
@@ -130,11 +134,18 @@ class Float:
         dec, minor = cls.split_point(val)
         fraction, digit = Arithmetic.str_to_integer_until_overflow(dec, cls.fraction_len)
         fraction, digit = Arithmetic.str_to_minor(fraction, minor, digit, cls.fraction_len)
-        exponent, _ = Arithmetic.add_bits(
-            Arithmetic.str_to_integer('127', cls.exponent_len),
-            Arithmetic.str_to_integer(str(digit), cls.exponent_len),
-            cls.exponent_len
-        )
+        if str(digit)[0] == '-':
+            exponent, _ = Arithmetic.sub_bits(
+                Arithmetic.str_to_integer('127', cls.exponent_len),
+                Arithmetic.str_to_integer(str(digit)[1:], cls.exponent_len),
+                cls.exponent_len
+            )
+        else:
+            exponent, _ = Arithmetic.add_bits(
+                Arithmetic.str_to_integer('127', cls.exponent_len),
+                Arithmetic.str_to_integer(str(digit), cls.exponent_len),
+                cls.exponent_len
+            )
         return Float(exponent, fraction, sign)
 
     @classmethod
@@ -144,19 +155,104 @@ class Float:
             return val[0], '0'
         return val[0], val[1]
 
-    @classmethod
-    def char_to_dec(cls, val: str, field: str) -> list:
+    def val(self) -> int:
         """
-        character 1 개를 0-9의 값으로 읽음
-        :param val: 0-9의 문자열
-        :param field: exponent or fraction
-        :return: 4 Bit 객체
+        bit 들로 이루어진 값을 int 값으로 읽을 수 있도록 만드는 함수
+        음수 확인은 signed bit를 통해 확인
+
+        테스트 및 출력을 위해 사용하는 함수
+        :return: int 값으로 리턴
         """
-        if field is 'exponent':
-            dec = cls.default_exponent_field[::]
+
+        if self.is_zero():
+            return 0
+
+        res = BitOperation.binary_to_float(self.exponents, self.fractions)
+        if self.sign:
+            return -res
+        return res
+
+    def __str__(self) -> str:
+        return str(self.val())
+
+    def is_negative(self) -> Bit:
+        """
+        Sign 비트를 통해 음수 확인
+        :return: 음수인지 여부
+        """
+        return self.sign
+
+    def __neg__(self) -> "Float":
+        """
+        sign minus 연산( - )을 위한 operator overloading
+        :return: 새로운 Float 객체로 return
+        """
+        return Float(self.exponents[::], self.fractions[::], ~self.sign)
+
+    def __add__(self, other: "Float") -> "Float":
+        """
+        Binary Add 연산 ( + )을 위한 operator overloading
+        exponent를 같은 값으로 만든 후 fraction 덧셈 연산
+        :param other: Float 타입 가정
+        :return: 새로운 Float 객체로 return
+        """
+        exp, a_frac, b_frac = Arithmetic.equalize_exponent(self.exponents, self.fractions, other.exponents, other.fractions)
+        if BitOperation.raw_ge_bits(a_frac, b_frac):
+            sign = self.sign
         else:
-            dec = cls.default_fraction_field[::]
+            sign = other.sign
 
-        dec[-4:] = BitOperation.num_map[val]
-        return dec
+        if self.sign ^ other.sign:
+            res, overflow = Arithmetic.sub_bits(a_frac, b_frac, self.fraction_len+1)
+            if sign:
+                res = Arithmetic.decomplement_bits(res, self.fraction_len+1)
+        else:
+            res, overflow = Arithmetic.add_bits(a_frac, b_frac, self.fraction_len+1)
+            if overflow:
+                res.insert(0, overflow)
+                res = res[:-1]
+                exp, _ = Arithmetic.add_bits(exp, BitOperation.num_map['1'], self.exponent_len)
 
+        first = BitOperation.first_bit_index(res)
+        exp, _ = Arithmetic.raw_sub_bits(exp, Arithmetic.str_to_integer(str(first), self.exponent_len))
+        frac = BitOperation.raw_lshift_bits(res, first)[1:]
+        if not self.sign ^ other.sign and not BitOperation.is_empty(res[-first+1:]):
+            frac, _ = Arithmetic.add_bits(frac, BitOperation.num_map['1'], self.fraction_len)
+        return Float(exp, frac, sign)
+
+    def __sub__(self, other: "Float") -> "Float":
+        """
+        Binary Sub 연산 ( - )을 위한 operator overloading
+        음수로 변경한 후 add 연산
+        :param other: Float 타입 가정
+        :return: 새로운 Float 객체로 return
+        """
+        return self + (-other)
+
+    def __mul__(self, other: "Float") -> "Float":
+        """
+        Binary Mul 연산 ( * )을 위한 operator overloading
+        :param other: Float 타입 가정
+        :return: 새로운 Float 객체로 return
+        """
+        pass
+
+    def __truediv__(self, other: "Float") -> "Float":
+        """
+        Binary Div 연산 ( / )을 위한 operator overloading
+        :param other: Float 타입 가정
+        :return: 새로운 Float 객체로 return
+        """
+        pass
+
+    def __le__(self, other: "Float") -> bool:
+        """
+        Low Equal 연산 ( <= )을 위한 operator overloading
+        :param other: Float 타입 가정
+        :return: 새로운 Float 객체로 return
+        """
+        pass
+
+    def __eq__(self, other: "Float") -> bool:
+        return self.sign == other.sign and BitOperation.eq_bits(self.exponents, other.exponents, self.exponent_len) and\
+               BitOperation.eq_bits(self.fractions, other.fractions, self.fraction_len)

@@ -36,7 +36,11 @@ class Arithmetic:
     @staticmethod
     def sub_bits(a: List[Bit], b: List[Bit], length: int) -> (List[Bit], Bit):
         a, b = BitOperation.equalize_bit_length(a, b, length)
-        b, _ = Arithmetic.complement_bits(b, length)
+        return Arithmetic.raw_sub_bits(a, b)
+
+    @staticmethod
+    def raw_sub_bits(a: List[Bit], b: List[Bit]) -> (List[Bit], Bit):
+        b, _ = Arithmetic.complement_bits(b, len(b))
         return Arithmetic.raw_add_bits(a, b)
 
     @staticmethod
@@ -83,6 +87,47 @@ class Arithmetic:
         return res
 
     @staticmethod
+    def equalize_exponent(a_exp: List[Bit], a_frac: List[Bit], b_exp: List[Bit], b_frac: List[Bit]):
+        a_frac = BitOperation.fraction_bits(a_frac)
+        b_frac = BitOperation.fraction_bits(b_frac)
+
+        if BitOperation.raw_ge_bits(a_exp, b_exp):
+            b_frac = Arithmetic.shift_fraction(a_exp, b_exp, b_frac)
+            exp = a_exp
+        else:
+            a_frac = Arithmetic.shift_fraction(b_exp, a_exp, a_frac)
+            exp = b_exp
+
+        return exp, a_frac, b_frac
+
+    @staticmethod
+    def shift_fraction(a_exp: List[Bit], b_exp: List[Bit], b_frac: List[Bit]):
+        diff, _ = Arithmetic.raw_sub_bits(a_exp, b_exp)
+        diff = BitOperation.binary_to_decimal(diff)
+
+        b_fraction = BitOperation.raw_rshift_bits(b_frac, diff)
+        if not BitOperation.is_empty(b_frac[:diff]):
+            b_fraction, _ = Arithmetic.add_bits(b_fraction, BitOperation.num_map['1'], len(b_fraction))
+            return b_fraction
+        return b_fraction
+
+    @staticmethod
+    def add_fraction(a: List[Bit], b: List[Bit], length: int) -> (List[Bit], Bit):
+        a, b = BitOperation.equalize_bit_length(a, b, length)
+        return Arithmetic.raw_add_fraction(a, b)
+
+    @staticmethod
+    def raw_add_fraction(a: List[Bit], b: List[Bit]) -> (List[Bit], Bit):
+        if BitOperation.is_empty(b):
+            return a, Bit()
+        carry_0 = BitOperation.raw_and_bits(a, b)
+        remain = BitOperation.raw_xor_bits(a, b)
+        carry = BitOperation.raw_lshift_bits(carry_0, 1)
+
+        res, overflow = Arithmetic.raw_add_fraction(remain, carry)
+        return res, overflow ^ carry_0[0]
+
+    @staticmethod
     def str_to_integer(val: str, length: int) -> (List[Bit], Bit):
         res, ten = BitOperation.equalize_bit_length(BitOperation.num_map['0'], BitOperation.num_map['10'], length)
         for c in val:
@@ -102,7 +147,7 @@ class Arithmetic:
         return res, length - BitOperation.first_bit_index(res) - 1
 
     @staticmethod
-    def str_to_minor(real: List[Bit], val: str, digit: List[Bit], length: int):
+    def str_to_minor(real: List[Bit], val: str, digit: int, length: int):
         real, ten = BitOperation.equalize_bit_length(real, BitOperation.num_map['10'], length)
         base = BitOperation.fit_bits(BitOperation.num_map['1'], length)
         twenty = BitOperation.raw_lshift_bits(ten, 1)
@@ -119,6 +164,8 @@ class Arithmetic:
                 shift += 1
             else:
                 remain = BitOperation.raw_lshift_bits(remain, 1)
+                if BitOperation.is_empty(real):
+                    return real, -127
 
             if BitOperation.first_bit_index(real) == 0:
                 real = BitOperation.raw_lshift_bits(real, 1)
