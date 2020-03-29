@@ -155,7 +155,7 @@ class Arithmetic:
         shift = 1
         index = 0
         while True:
-            if index < len(val):
+            if index < len(val) and index < 6:
                 remain = Arithmetic.raw_mul_bits(remain, twenty)
                 next_digit = BitOperation.lshift_bits(BitOperation.num_map[val[index]], shift, length)
                 remain, _ = Arithmetic.raw_add_bits(remain, next_digit)
@@ -166,6 +166,8 @@ class Arithmetic:
                 remain = BitOperation.raw_lshift_bits(remain, 1)
                 if BitOperation.is_empty(real):
                     return real, -127
+
+            print(val[index-1], val)
 
             if BitOperation.first_bit_index(real) == 0:
                 real = BitOperation.raw_lshift_bits(real, 1)

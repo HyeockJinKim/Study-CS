@@ -59,11 +59,12 @@ class Float:
         Float 의 최대값
 
         2 ** ((1.fraction)(유효숫자 수)) ** (2 ** (exponent 절반))
-        :return: Float 의 최대값 ((2**(23+1))**(2**7-1))
+        :return: Float 의 최대값 3.40282346639e+38
         """
 
         sign = Bit()
-        exponent = [Bit(True) for _ in range(cls.exponent_len)]
+        exponent = [Bit(True) for _ in range(cls.exponent_len-1)]
+        exponent.append(Bit())
         fraction = [Bit(True) for _ in range(cls.fraction_len)]
         return Float(exponent, fraction, sign)
 
@@ -77,8 +78,10 @@ class Float:
         """
 
         sign = Bit(True)
-        exponent = [Bit(True) for _ in range(cls.exponent_len)]
-        fraction = [Bit(True) for _ in range(cls.fraction_len)]
+        exponent = [Bit() for _ in range(cls.exponent_len-1)]
+        exponent.append(Bit(True))
+        fraction = [Bit() for _ in range(cls.fraction_len-1)]
+        fraction.append(Bit(True))
         return Float(exponent, fraction, sign)
 
     def set(self, _float: float):
@@ -130,10 +133,14 @@ class Float:
             val = val[1:]
         else:
             sign = Bit()
-
         dec, minor = cls.split_point(val)
-        fraction, digit = Arithmetic.str_to_integer_until_overflow(dec, cls.fraction_len)
-        fraction, digit = Arithmetic.str_to_minor(fraction, minor, digit, cls.fraction_len)
+        fraction, digit = Arithmetic.str_to_integer_until_overflow(dec, cls.fraction_len+1)
+        frac, digit = Arithmetic.str_to_minor(fraction, minor, digit, cls.fraction_len+1)
+        fraction = frac[:-1]
+        if frac[-1]:
+            fraction, overflow = Arithmetic.add_bits(fraction, BitOperation.num_map['1'], cls.fraction_len)
+            if overflow:
+                digit += 1
         if str(digit)[0] == '-':
             exponent, _ = Arithmetic.sub_bits(
                 Arithmetic.str_to_integer('127', cls.exponent_len),
