@@ -53,12 +53,25 @@ class Float:
 
         return not self.sign and BitOperation.is_empty(self.exponents) and BitOperation.is_empty(self.fractions)
 
+    def is_nan(self) -> bool:
+        """
+        값이 nan 인지 확인하는 함수
+        :return: exponent가 모두 1이고 fraction은 모두 0이 아닌지 여부
+        """
+        return BitOperation.is_empty(BitOperation.neg_bits(self.exponents)) and not BitOperation.is_empty(self.fractions)
+
+    def is_inf(self) -> bool:
+        """
+        값이 inf 인지 확인하는 함수
+        :return: exponent가 모두 1이고 fraction은 모두 0인지 여부
+        """
+        return BitOperation.is_empty(BitOperation.neg_bits(self.exponents)) and BitOperation.is_empty(self.fractions)
+
     @classmethod
     def max_value(cls) -> "Float":
         """
         Float 의 최대값
 
-        2 ** ((1.fraction)(유효숫자 수)) ** (2 ** (exponent 절반))
         :return: Float 의 최대값 3.40282346639e+38
         """
 
@@ -73,8 +86,7 @@ class Float:
         """
         Float 의 최소값
 
-        - 2 ** ((1.fraction)(유효숫자 수)) ** (2 ** (exponent 절반))
-        :return: Float 의 최소값 (-(2**(23+1))**(2**7-1))
+        :return: Float 의 최소값 -1.175494490952134e-38
         """
 
         sign = Bit(True)
@@ -82,6 +94,33 @@ class Float:
         exponent.append(Bit(True))
         fraction = [Bit() for _ in range(cls.fraction_len-1)]
         fraction.append(Bit(True))
+        return Float(exponent, fraction, sign)
+
+    @classmethod
+    def inf(cls) -> "Float":
+        """
+        무한대 값
+
+        :return: Infinite 값
+        """
+
+        sign = Bit()
+        exponent = [Bit(True) for _ in range(cls.exponent_len)]
+        fraction = [Bit() for _ in range(cls.fraction_len)]
+        return Float(exponent, fraction, sign)
+
+    @classmethod
+    def nan(cls) -> "Float":
+        """
+        알 수 없는 값
+
+        Exponent 값은 모두 1 이고 fraction이 모두 0이 아닌 값 (하나라도 1이 있음)
+        :return: nan 값
+        """
+
+        sign = Bit()
+        exponent = [Bit(True) for _ in range(cls.exponent_len)]
+        fraction = [Bit(True) for _ in range(cls.fraction_len)]
         return Float(exponent, fraction, sign)
 
     def set(self, _float: float):
@@ -136,11 +175,8 @@ class Float:
         dec, minor = cls.split_point(val)
         fraction, digit = Arithmetic.str_to_integer_until_overflow(dec, cls.fraction_len+1)
         frac, digit = Arithmetic.str_to_minor(fraction, minor, digit, cls.fraction_len+1)
-        fraction = frac[:-1]
-        if frac[-1]:
-            fraction, overflow = Arithmetic.add_bits(fraction, BitOperation.num_map['1'], cls.fraction_len)
-            if overflow:
-                digit += 1
+
+        fraction = frac[1:]
         if str(digit)[0] == '-':
             exponent, _ = Arithmetic.sub_bits(
                 Arithmetic.str_to_integer('127', cls.exponent_len),
@@ -162,17 +198,25 @@ class Float:
             return val[0], '0'
         return val[0], val[1]
 
-    def val(self) -> int:
+    def val(self) -> float:
         """
-        bit 들로 이루어진 값을 int 값으로 읽을 수 있도록 만드는 함수
+        bit 들로 이루어진 값을 float 값으로 읽을 수 있도록 만드는 함수
         음수 확인은 signed bit를 통해 확인
 
         테스트 및 출력을 위해 사용하는 함수
-        :return: int 값으로 리턴
+        :return: float 값으로 리턴
         """
 
         if self.is_zero():
             return 0
+
+        if self.is_nan():
+            return float('nan')
+
+        if self.is_inf():
+            if self.sign:
+                return -float('inf')
+            return float('inf')
 
         res = BitOperation.binary_to_float(self.exponents, self.fractions)
         if self.sign:
@@ -203,7 +247,8 @@ class Float:
         :param other: Float 타입 가정
         :return: 새로운 Float 객체로 return
         """
-        exp, a_frac, b_frac = Arithmetic.equalize_exponent(self.exponents, self.fractions, other.exponents, other.fractions)
+        exp, a_frac, b_frac = Arithmetic.equalize_exponent(self.exponents, self.fractions, other.exponents,
+                                                           other.fractions)
         if BitOperation.raw_ge_bits(a_frac, b_frac):
             sign = self.sign
         else:
@@ -221,10 +266,11 @@ class Float:
                 exp, _ = Arithmetic.add_bits(exp, BitOperation.num_map['1'], self.exponent_len)
 
         first = BitOperation.first_bit_index(res)
+        if first != 0:
+            res, _ = Arithmetic.add_bits(res, BitOperation.num_map['1'], self.fraction_len + 1)
         exp, _ = Arithmetic.raw_sub_bits(exp, Arithmetic.str_to_integer(str(first), self.exponent_len))
         frac = BitOperation.raw_lshift_bits(res, first)[1:]
-        if not self.sign ^ other.sign and not BitOperation.is_empty(res[-first+1:]):
-            frac, _ = Arithmetic.add_bits(frac, BitOperation.num_map['1'], self.fraction_len)
+
         return Float(exp, frac, sign)
 
     def __sub__(self, other: "Float") -> "Float":
@@ -242,7 +288,42 @@ class Float:
         :param other: Float 타입 가정
         :return: 새로운 Float 객체로 return
         """
-        pass
+        a_frac = BitOperation.fraction_bits(self.fractions)
+        b_frac = BitOperation.fraction_bits(other.fractions)
+
+        exp, _ = Arithmetic.add_bits(self.exponents, other.exponents, self.exponent_len)
+        bias = Arithmetic.str_to_integer('127', self.exponent_len)
+        exp, _ = Arithmetic.raw_sub_bits(exp, bias)
+
+        extra = BitOperation.empty_bits(self.fraction_len + 1)
+        mul = a_frac
+        over = BitOperation.empty_bits(self.fraction_len + 1)
+        for bit in b_frac[:0:-1]:
+            if bit:
+                extra, overflow = Arithmetic.raw_add_bits(extra, mul)
+                if overflow:
+                    over, _ = Arithmetic.add_bits(over, BitOperation.num_map['1'], self.fraction_len+1)
+            mul = BitOperation.raw_lshift_bits(mul, 1)
+            if BitOperation.is_empty(mul):
+                break
+
+        res = BitOperation.empty_bits(self.fraction_len + 1)
+        mul = a_frac
+        for bit in b_frac:
+            if bit:
+                res, overflow = Arithmetic.raw_add_bits(res, mul)
+                if overflow:
+                    res = BitOperation.raw_rshift_bits(res, 1)
+                    res[0] = overflow
+                    exp, _ = Arithmetic.add_bits(exp, BitOperation.num_map['1'], self.exponent_len)
+                    mul = BitOperation.raw_rshift_bits(mul, 1)
+            mul = BitOperation.raw_rshift_bits(mul, 1)
+            if BitOperation.is_empty(mul):
+                break
+
+        res, _ = Arithmetic.raw_add_bits(res, over)
+        res = res[1:]
+        return Float(exp, res, self.sign ^ other.sign)
 
     def __truediv__(self, other: "Float") -> "Float":
         """
@@ -250,7 +331,36 @@ class Float:
         :param other: Float 타입 가정
         :return: 새로운 Float 객체로 return
         """
-        pass
+        if other.is_zero():
+            if self.is_zero():
+                return self.nan()
+            if self.sign ^ other.sign:
+                return -self.inf()
+            return self.inf()
+
+        remain = BitOperation.fraction_bits(self.fractions)
+        div = BitOperation.fraction_bits(other.fractions)
+        exp, _ = Arithmetic.sub_bits(self.exponents, other.exponents, self.exponent_len)
+        bias = Arithmetic.str_to_integer('127', self.exponent_len)
+        exp, _ = Arithmetic.raw_add_bits(exp, bias)
+
+        res = BitOperation.empty_bits(self.fraction_len+1)
+        one = BitOperation.fit_bits(BitOperation.num_map['1'], self.fraction_len+1)
+
+        for i in range(self.fraction_len, -1, -1):
+            if BitOperation.raw_ge_bits(remain, div):
+                remain, _ = Arithmetic.raw_sub_bits(remain, div)
+                quotient = BitOperation.raw_lshift_bits(one, i)
+                res = BitOperation.raw_or_bits(res, quotient)
+                remain = BitOperation.raw_lshift_bits(remain, 1)
+            else:
+                div = BitOperation.raw_rshift_bits(div, 1)
+
+        if BitOperation.first_bit_index(res) != 0:
+            res = BitOperation.raw_lshift_bits(res, 1)
+            exp, _ = Arithmetic.sub_bits(exp, BitOperation.num_map['1'], self.exponent_len)
+
+        return Float(exp, res[1:], self.sign ^ other.sign)
 
     def __le__(self, other: "Float") -> bool:
         """
