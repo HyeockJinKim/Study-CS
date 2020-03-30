@@ -193,6 +193,11 @@ class Float:
 
     @classmethod
     def split_point(cls, val: str) -> (str, str):
+        """
+        문자열을 . 을 기준으로 정수값과 소수값을 나눔
+        :param val: 실수값 문자열
+        :return: 정수값, 소수값
+        """
         val = val.split('.')
         if len(val) < 2:
             return val[0], '0'
