@@ -21,9 +21,13 @@ Singed integer의 비트 단위의 값 처리를 확인
 
 Unsigned integer의 비트 단위의 값 처리를 확인
 
+### [4. Float][float]
+> Bit 단위의 Float 구현
+
+Float의 비트 단위 값 처리 확인
 
 [bit]: ./bit/README.md
 [number]: ./nums/README.md
 [integer]: ./integer/README.md
 [unsigned_integer]: ./unsigned_integer/README.md
-
+[float]: ./float/README.md
