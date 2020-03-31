@@ -15,7 +15,7 @@ class Arithmetic:
         :return: Bit List의 2의 보수 값
         """
         a = BitOperation.fit_bits(a, length)
-        a = BitOperation.neg_bits(a)
+        a = BitOperation.invert_bits(a)
         return Arithmetic.add_bits(a, [Bit(True)], length)
 
     @staticmethod
@@ -29,7 +29,7 @@ class Arithmetic:
         """
         a = BitOperation.fit_bits(a, length)
         a, _ = Arithmetic.add_bits(a, [Bit(True) for _ in range(len(a))], length)
-        return BitOperation.neg_bits(a)
+        return BitOperation.invert_bits(a)
 
     @staticmethod
     def add_bits(a: List[Bit], b: List[Bit], length: int) -> (List[Bit], Bit):

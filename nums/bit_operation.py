@@ -53,17 +53,17 @@ class BitOperation:
         :param b: 비교 BitList
         :return: 값이 같은 지 여부
         """
+        res = Bit()
         for i in range(len(a)):
-            if a[i] != b[i]:
-                return False
-        return True
+            res |= (a[i] ^ b[i])
+        return bool(~res)
 
     @staticmethod
     def le_bits(a: List[Bit], b: List[Bit], length: int) -> bool:
         """
         두 Bit List의 길이를 length 길이로 맞춘 뒤 a가 작거나 같은 지 ( <= ) 비교
         raw_le_bits 함수를 통해 비교
-        :param a: low-equal 인지 확인하기 위한 BitList
+        :param a: less-equal 인지 확인하기 위한 BitList
         :param b: 비교 BitList
         :param length: 원하는 Bit List의 길이
         :return: 값이 작거나 같은지 여부
@@ -75,7 +75,7 @@ class BitOperation:
     def raw_le_bits(a: List[Bit], b: List[Bit]) -> bool:
         """
         같은 길이의 Bit List 중 a가 작거나 같은 지 ( <= ) 비교
-        :param a: low-equal 인지 확인하기 위한 BitList
+        :param a: less-equal 인지 확인하기 위한 BitList
         :param b: 비교 BitList
         :return: 값이 작거나 같은지 여부
         """
@@ -253,12 +253,12 @@ class BitOperation:
         return frac
 
     @staticmethod
-    def neg_bits(a: List[Bit]) -> List[Bit]:
+    def invert_bits(a: List[Bit]) -> List[Bit]:
         """
-        Bit List에 Negate ( ~ ) 연산
+        Bit List에 invert ( ~ ) 연산
         Bit List의 모든 Bit의 값을 반대로 뒤집음
-        :param a: Negate 연산할 Bit List
-        :return: Negate 연산된 Bit List
+        :param a: invert 연산할 Bit List
+        :return: invert 연산된 Bit List
         """
         return [~bit for bit in a]
 

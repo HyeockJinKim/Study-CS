@@ -58,14 +58,14 @@ class Float:
         값이 nan 인지 확인하는 함수
         :return: exponent가 모두 1이고 fraction은 모두 0이 아닌지 여부
         """
-        return BitOperation.is_empty(BitOperation.neg_bits(self.exponents)) and not BitOperation.is_empty(self.fractions)
+        return BitOperation.is_empty(BitOperation.invert_bits(self.exponents)) and not BitOperation.is_empty(self.fractions)
 
     def is_inf(self) -> bool:
         """
         값이 inf 인지 확인하는 함수
         :return: exponent가 모두 1이고 fraction은 모두 0인지 여부
         """
-        return BitOperation.is_empty(BitOperation.neg_bits(self.exponents)) and BitOperation.is_empty(self.fractions)
+        return BitOperation.is_empty(BitOperation.invert_bits(self.exponents)) and BitOperation.is_empty(self.fractions)
 
     @classmethod
     def max_value(cls) -> "Float":
