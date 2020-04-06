@@ -9,11 +9,11 @@ def incrementer_32bit(a: Word) -> Word:
     :param a: 1을 더할 값 Word
     :return: 1을 더한 값 Word
     """
-    one = Word([Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(),
-                Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(),
-                Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(),
-                Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(), Bit(True)])
-    return adder_32bit(a, one)
+    c = Bit(True)
+    word = Word()
+    for i in range(a.length-1, -1, -1):
+        word[i], c = full_adder_gate(a[i], Bit(), c)
+    return word
 
 
 def adder_32bit(a: Word, b: Word) -> Word:

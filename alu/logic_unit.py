@@ -79,37 +79,35 @@ def xnor_32bit(a: Word, b: Word) -> Word:
     return Word([xnor_gate(a[i], b[i]) for i in range(Word.length)])
 
 
-def logical_lshift_32bit(a: Word, num: int) -> Word:
+def logical_lshift_32bit(a: Word) -> Word:
     """
     32 bit 단위의 Logical left-shift 연산
     shift 된 위치의 값은 0으로 채워짐
 
     :param a: logical left-shift 연산을 수행할 Word
-    :param num: logical left-shift 연산을 수행할 크기
     :return: logical left-shift 연산 수핼 결과 Word
     """
     # TODO: shift gate를 통한 계산으로 변경 필요
     # TODO: Barrel shift 구현
     word = Word()
-    for new_index, old_index in range(num, Word.length):
+    for new_index, old_index in range(1, Word.length):
         word[new_index] = a[old_index]
 
     return word
 
 
-def logical_rshift_32bit(a: Word, num: int) -> Word:
+def logical_rshift_32bit(a: Word) -> Word:
     """
     32 bit 단위의 Logical right-shift 연산
     shift 된 위치의 값은 0으로 채워짐
 
     :param a: logical right-shift 연산을 수행할 Word
-    :param num: logical right-shift 연산을 수행할 크기
     :return: logical right-shift 연산 수핼 결과 Word
     """
     # TODO: shift gate를 통한 계산으로 변경 필요
     # TODO: Barrel shift 구현
     word = Word()
-    for new_index, old_index in range(num, Word.length):
+    for new_index, old_index in range(1, Word.length):
         word[old_index] = a[new_index]
 
     return word
